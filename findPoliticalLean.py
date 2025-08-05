@@ -36,6 +36,7 @@ def gather_post_data(subreddit, headers, postAmount):
         response = requests.get(f'https://oauth.reddit.com/r/{subreddit}/top', headers=headers, params={'limit': postAmount, 't': 'week'}) # Limit is the amount of posts to fetch
     return response
 
+
 # This script will authenticate with Reddit, fetch posts, and analyze their political leanings
 def main():
     load_env() # Load environment variables
