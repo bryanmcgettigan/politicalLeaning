@@ -5,12 +5,6 @@ from collections import Counter
 from dotenv import load_dotenv
 import os
 
-print("Welcome to the Political Leanings Analyzer! This tool will analyze the political leanings of posts in a subreddit based on their comments.")
-
-subreddit = 'ufc' # Change this to the subreddit you want to analyze
-subreddit = input("Enter the subreddit you want to analyze: ") or subreddit  # Allow user to input subreddit, defaulting to 'ufc'
-postAmount = 20 # Change this to the amount of posts you want to analyze
-commentAmount = 15 # Change this to the amount of comments you want to analyze per post
 
 def load_env():
     load_dotenv()
@@ -21,6 +15,26 @@ def load_env():
     API_KEY = os.getenv('API_KEY')
     USERNAME = os.getenv('USERNAME')
     
+#Get subreddit from user input, defaulting to 'AskReddit' if not provided
+def get_subreddit(postAmount):
+    print(f"Welcome to the Political Leanings Analyzer! This tool will analyze the political leanings of posts in a subreddit based on the top {postAmount} posts comments of the past week.")
+    subreddit = 'AskReddit' # Change this to the subreddit you want to analyze
+    subreddit = input("Enter the subreddit you want to analyze: ")  # Allow user to input subreddit, defaulting to 'ufc'
+    if not subreddit:
+        subreddit ='AskReddit'
+        print(f"Defaulting to r/{subreddit}")
+    return subreddit
+
+# This function fetches the top posts from the subreddit and returns the response
+def gather_post_data(subreddit, headers, postAmount):
+    response = requests.get(f'https://oauth.reddit.com/r/{subreddit}/top', headers=headers, params={'limit': postAmount, 't': 'week'}) # Limit is the amount of posts to fetch
+    print(f"Fetching posts from r/{subreddit}...")
+
+    while response.status_code != 200:
+        print(f"Failed to fetch posts from {subreddit}:", response.status_code)
+        subreddit = input("Enter the subreddit you want to analyze: ")
+        response = requests.get(f'https://oauth.reddit.com/r/{subreddit}/top', headers=headers, params={'limit': postAmount, 't': 'week'}) # Limit is the amount of posts to fetch
+    return response
 
 # This script will authenticate with Reddit, fetch posts, and analyze their political leanings
 def main():
@@ -30,15 +44,13 @@ def main():
         return
     headers = authenticate(CLIENT_ID, SECRET_ID, PASSWORD, USERNAME)
     setupClient(API_KEY) # Initialize OpenAI client with API key
-    # Fetch posts from the specified subreddit
-    response = requests.get(f'https://oauth.reddit.com/r/{subreddit}/top', headers=headers, params={'limit': postAmount, 't': 'week'}) # Limit is the amount of posts to fetch
-    print(f"Fetching posts from r/{subreddit}...")
 
-    while response.status_code != 200:
-        print(f"Failed to fetch posts from {subreddit}:", response.status_code)
-        subreddit = input("Enter the subreddit you want to analyze: ")
-        response = requests.get(f'https://oauth.reddit.com/r/{subreddit}/top', headers=headers, params={'limit': postAmount, 't': 'week'}) # Limit is the amount of posts to fetch
+    postAmount = 15 # Change this to the amount of posts you want to analyze
+    commentAmount = 15 # Change this to the amount of comments you want to analyze per post
 
+    subreddit = get_subreddit(postAmount)  # Get subreddit from user input
+
+    response = gather_post_data(subreddit, headers, postAmount)  # Fetch posts from the subreddit
     
     post_id_list=[]
     post_titles = []
